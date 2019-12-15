@@ -40,9 +40,13 @@ var Player = function(url, options) {
 		this.renderer = !options.disableGl && JSMpeg.Renderer.WebGL.IsSupported()
 			? new JSMpeg.Renderer.WebGL(options)
 			: new JSMpeg.Renderer.Canvas2D(options);
-		
+
 		this.demuxer.connect(JSMpeg.Demuxer.TS.STREAM.VIDEO_1, this.video);
 		this.video.connect(this.renderer);
+
+		if (options.streaming) {
+			this.source.video = this.video;
+		}
 	}
 
 	if (options.audio !== false && JSMpeg.AudioOutput.WebAudio.IsSupported()) {
@@ -70,7 +74,7 @@ var Player = function(url, options) {
 	}
 
 	// If we have WebAssembly support, wait until the module is compiled before
-	// loading the source. Otherwise the decoders won't know what to do with 
+	// loading the source. Otherwise the decoders won't know what to do with
 	// the source data.
 	if (this.wasmModule) {
 		if (this.wasmModule.ready) {
@@ -86,7 +90,7 @@ var Player = function(url, options) {
 	}
 	else {
 		this.startLoading();
-		
+
 	}
 };
 
@@ -236,7 +240,7 @@ Player.prototype.updateForStreaming = function() {
 				this.audioOut.resetEnqueuedTime();
 				this.audioOut.enabled = false;
 			}
-			decoded = this.audio.decode();		
+			decoded = this.audio.decode();
 		} while (decoded);
 		this.audioOut.enabled = true;
 	}
@@ -259,7 +263,7 @@ Player.prototype.updateForStaticFile = function() {
 	if (this.audio && this.audio.canPlay) {
 		// Do we have to decode and enqueue some more audio data?
 		while (
-			!notEnoughData && 
+			!notEnoughData &&
 			this.audio.decodedTime - this.audio.currentTime < 0.25
 		) {
 			notEnoughData = !this.audio.decode();

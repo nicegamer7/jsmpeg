@@ -822,6 +822,20 @@ int mpeg1_decoder_has_sequence_header(mpeg1_decoder_t *self) {
 	return self->has_sequence_header;
 }
 
+void mpeg1_decoder_clear_sequence_header(mpeg1_decoder_t *self) {
+	if (self->has_sequence_header) {
+		free(self->planes_current.y);
+		free(self->planes_current.cr);
+		free(self->planes_current.cb);
+
+		free(self->planes_forward.y);
+		free(self->planes_forward.cr);
+		free(self->planes_forward.cb);
+
+		self->has_sequence_header = false;
+	}
+}
+
 float mpeg1_decoder_get_frame_rate(mpeg1_decoder_t *self) {
 	return self->frame_rate;
 }
@@ -870,7 +884,7 @@ bool mpeg1_decoder_decode(mpeg1_decoder_t *self) {
 // Private methods
 
 void decode_sequence_header(mpeg1_decoder_t *self) {
-	int previous_width = self->width; 
+	int previous_width = self->width;
 	int previous_height = self->height;
 
 	self->width = bit_buffer_read(self->bits, 12);
@@ -1612,8 +1626,8 @@ void zero_block_data(mpeg1_decoder_t *self) {
 }
 
 inline uint8_t clamp_to_uint8(int n) {
-	return n > 255 
-		? 255 
+	return n > 255
+		? 255
 		: (n < 0 ? 0 : n);
 }
 

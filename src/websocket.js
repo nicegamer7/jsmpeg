@@ -8,6 +8,7 @@ var WSSource = function(url, options) {
 
 	this.callbacks = {connect: [], data: []};
 	this.destination = null;
+	this.video = null;
 
 	this.reconnectInterval = options.reconnectInterval !== undefined
 		? options.reconnectInterval
@@ -38,7 +39,7 @@ WSSource.prototype.start = function() {
 	this.shouldAttemptReconnect = !!this.reconnectInterval;
 	this.progress = 0;
 	this.established = false;
-	
+
 	this.socket = new WebSocket(this.url, this.options.protocols || null);
 	this.socket.binaryType = 'arraybuffer';
 	this.socket.onmessage = this.onMessage.bind(this);
@@ -59,7 +60,7 @@ WSSource.prototype.onClose = function() {
 	if (this.shouldAttemptReconnect) {
 		clearTimeout(this.reconnectTimeoutId);
 		this.reconnectTimeoutId = setTimeout(function(){
-			this.start();	
+			this.start();
 		}.bind(this), this.reconnectInterval*1000);
 	}
 };
@@ -72,8 +73,15 @@ WSSource.prototype.onMessage = function(ev) {
 		this.onEstablishedCallback(this);
 	}
 
+	var data;
+	if (this.options.onSocketMessage) {
+		data = this.options.onSocketMessage(this, ev);
+	} else {
+		data = new Uint8Array(ev.data);
+	}
+
 	if (this.destination) {
-		this.destination.write(ev.data);
+		this.destination.write(data);
 	}
 };
 
